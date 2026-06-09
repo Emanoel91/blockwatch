@@ -2,7 +2,8 @@ import streamlit as st
 
 # --- Page Config: Tab Title & Icon ---
 st.set_page_config(
-    page_title="Blockwatch",
+    page_title="Axelar Mega Dashboard",
+    page_icon="https://axelarscan.io/logos/logo.png",
     layout="wide"
 )
 
@@ -10,7 +11,8 @@ st.set_page_config(
 st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 15px;">
-        <h1 style="margin: 0;">Blockwatch</h1>
+        <img src="https://axelarscan.io/logos/logo.png" alt="axelar" style="width:60px; height:60px;">
+        <h1 style="margin: 0;">Axelar Mega Dashboard</h1>
     </div>
     """,
     unsafe_allow_html=True
@@ -25,6 +27,22 @@ st.markdown(
             <img src="https://pbs.twimg.com/profile_images/2060406047391559681/sA9zPNKM_400x400.jpg" alt="Eman Raz" style="width:25px; height:25px; border-radius: 50%;"> 
             <span>Built by: <a href="https://x.com/0xeman_raz" target="_blank">Eman Raz</a></span>
         </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Info Box ---
+st.markdown(
+    """
+    <div style="background-color: #d5fe8b; padding: 15px; border-radius: 10px; border: 1px solid #d5fe8b;">
+        This dashboard provides comprehensive monitoring of the entire <b>Axelar cross-chain infrastructure</b>
+        across both <b>testnet</b> and <b>mainnet</b> environments. It tracks the performance and health of
+        <b>Axelar’s cross-chain services</b>, monitors <b>tokens leveraging Axelar for cross-chain transfers</b>,
+        and oversees <b>smart contracts</b> built on the Axelar network.
+        <br><br>
+        With end-to-end visibility into the ecosystem, this dashboard serves as a unified platform for
+        tracking, analyzing, and evaluating all <b>cross-chain activity</b> across Axelar.
     </div>
     """,
     unsafe_allow_html=True
@@ -76,6 +94,12 @@ st.sidebar.markdown(
     </style>
 
     <div class="sidebar-footer">
+        <div>
+            <a href="https://x.com/axelar" target="_blank">
+                <img src="https://img.cryptorank.io/coins/axelar1663924228506.png" alt="Axelar Logo">
+                Powered by Axelar
+            </a>
+        </div>
         <div style="margin-top: 5px;">
             <a href="https://x.com/0xeman_raz" target="_blank">
                 <img src="https://pbs.twimg.com/profile_images/2060406047391559681/sA9zPNKM_400x400.jpg" alt="Eman Raz">
