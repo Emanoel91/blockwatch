@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 
 # =====================================================
 # PAGE CONFIG
@@ -143,6 +144,8 @@ def format_number(value):
 
 @st.cache_data(ttl=300)
 def fetch_stats(chain_id):
+
+    API_KEY = os.getenv("BLOCKSCOUT_API_KEY")
 
     url = (
         f"https://api.blockscout.com/{chain_id}"
