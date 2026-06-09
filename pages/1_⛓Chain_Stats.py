@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import os
 
 # =====================================================
 # PAGE CONFIG
@@ -16,7 +15,7 @@ st.set_page_config(
 # API KEY
 # =====================================================
 
-API_KEY = "YOUR_API_KEY"
+API_KEY = st.secrets["BLOCKSCOUT_API_KEY"]
 
 # =====================================================
 # CSS
@@ -30,6 +29,16 @@ st.markdown("""
     padding-bottom: 2rem;
 }
 
+div[data-testid="stMetricValue"] {
+    font-size: 34px !important;
+    font-weight: bold !important;
+}
+
+div[data-testid="stMetricLabel"] {
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+
 [data-testid="metric-container"] {
     background: linear-gradient(145deg,#1c1c1c,#111111);
     border: 1px solid rgba(255,255,255,0.05);
@@ -38,82 +47,87 @@ st.markdown("""
     box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
-[data-testid="metric-container"] label {
-    color: #9f9f9f !important;
-}
-
-[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: white;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
 # NETWORKS
 # =====================================================
-
-MAINNETS = {
-    "Ethereum": {
-        "chain_id": 1,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum.svg"
-    },
-    "Base": {
-        "chain_id": 8453,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/base.svg"
-    },
-    "Polygon PoS": {
-        "chain_id": 137,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/polygon-pos.svg"
-    },
-    "OP Mainnet": {
-        "chain_id": 10,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/op-mainnet.svg"
-    },
-    "Arbitrum One Nitro": {
-        "chain_id": 42161,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/arbitrum-one-nitro.svg"
-    },
-    "Scroll": {
-        "chain_id": 534352,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/scroll.svg"
-    },
-    "ZKsync Era": {
-        "chain_id": 324,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zksync-era.svg"
-    }
-}
-
-TESTNETS = {
-    "Arc Testnet": {
-        "chain_id": 5042002,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Arc.svg"
-    },
-    "Ethereum Sepolia": {
-        "chain_id": 11155111,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum.svg"
-    },
-    "Base Sepolia": {
-        "chain_id": 84532,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/base-sepolia.svg"
-    },
-    "Arbitrum Sepolia": {
-        "chain_id": 421614,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/arbitrum.svg"
-    },
-    "OP Sepolia": {
-        "chain_id": 11155420,
-        "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/op-mainnet.svg"
-    }
-}
+# کل دیکشنری Mainnet و Testnet خودت را اینجا قرار بده
 
 NETWORKS = {
-    "Mainnet": MAINNETS,
-    "Testnet": TESTNETS
+    "Mainnet": {
+        "Ethereum": {
+            "chain_id": 1,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum.svg"
+        }
+    },
+
+    "Testnet": {
+        "Arc Testnet": {
+            "chain_id": 5042002,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Arc.svg"
+        }
+    }
 }
 
 # =====================================================
-# HELPERS
+# KPI HELP
+# =====================================================
+
+KPI_HELP = {
+
+    "Average Block Time":
+        "Average time required to produce a block.",
+
+    "Coin Price":
+        "Current market price of the native token.",
+
+    "Coin Price Change %":
+        "24-hour price change percentage.",
+
+    "Gas Slow":
+        "Recommended gas price for low-priority transactions.",
+
+    "Gas Average":
+        "Recommended gas price for normal transactions.",
+
+    "Gas Fast":
+        "Recommended gas price for urgent transactions.",
+
+    "Gas Used Today":
+        "Total gas consumed today.",
+
+    "Market Cap":
+        "Current network market capitalization.",
+
+    "Network Utilization %":
+        "Percentage of network capacity currently utilized.",
+
+    "Total Addresses":
+        "Total addresses discovered on chain.",
+
+    "Total Blocks":
+        "Total blocks produced.",
+
+    "Total Gas Used":
+        "Lifetime gas consumed on the network.",
+
+    "Total Transactions":
+        "Lifetime transaction count.",
+
+    "Transactions Today":
+        "Transactions processed today.",
+
+    "TVL":
+        "Total Value Locked.",
+
+    "Gas Prices Update In":
+        "Seconds until gas prices refresh."
+}
+
+# =====================================================
+# FORMATTER
 # =====================================================
 
 def format_number(value):
@@ -122,16 +136,20 @@ def format_number(value):
         return "-"
 
     try:
+
         value = float(value)
 
         if value >= 1_000_000_000:
-            return f"{value/1_000_000_000:.2f}B"
+            return f"{value / 1_000_000_000:.2f}B"
 
         if value >= 1_000_000:
-            return f"{value/1_000_000:.2f}M"
+            return f"{value / 1_000_000:.2f}M"
 
         if value >= 1_000:
-            return f"{value/1_000:.2f}K"
+            return f"{value / 1_000:.2f}K"
+
+        if value < 1 and value != 0:
+            return f"{value:.4f}"
 
         if value.is_integer():
             return f"{int(value):,}"
@@ -141,22 +159,49 @@ def format_number(value):
     except:
         return str(value)
 
+# =====================================================
+# FETCH DATA
+# =====================================================
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=7200)
 def fetch_stats(chain_id):
 
-    API_KEY = os.getenv("BLOCKSCOUT_API_KEY")
-
     url = (
-        f"https://api.blockscout.com/{chain_id}"
-        f"/api/v2/stats?apikey={API_KEY}"
+        f"https://api.blockscout.com/"
+        f"{chain_id}/api/v2/stats"
+        f"?apikey={API_KEY}"
     )
 
-    response = requests.get(url, timeout=30)
+    response = requests.get(
+        url,
+        timeout=30
+    )
+
     response.raise_for_status()
 
     return response.json()
 
+# =====================================================
+# KPI RENDER
+# =====================================================
+
+def show_metrics(metrics, cols=4):
+
+    for i in range(0, len(metrics), cols):
+
+        row = st.columns(cols)
+
+        chunk = metrics[i:i + cols]
+
+        for col, (label, value) in zip(row, chunk):
+
+            with col:
+
+                st.metric(
+                    label=label,
+                    value=format_number(value),
+                    help=KPI_HELP.get(label)
+                )
 
 # =====================================================
 # HEADER
@@ -165,7 +210,7 @@ def fetch_stats(chain_id):
 st.title("🌐 Blockscout Multi-Chain Dashboard")
 
 st.info(
-    "Select Mainnet/Testnet and a blockchain network to view live Blockscout statistics."
+    "Select a blockchain network to view live Blockscout statistics."
 )
 
 # =====================================================
@@ -175,9 +220,10 @@ st.info(
 col1, col2 = st.columns(2)
 
 with col1:
+
     network_type = st.selectbox(
         "Network Type",
-        ["Mainnet", "Testnet"]
+        list(NETWORKS.keys())
     )
 
 available_chains = list(
@@ -185,6 +231,7 @@ available_chains = list(
 )
 
 with col2:
+
     chain_name = st.selectbox(
         "Blockchain",
         available_chains
@@ -196,16 +243,18 @@ chain_id = selected_chain["chain_id"]
 logo = selected_chain["logo"]
 
 # =====================================================
-# LOGO + TITLE
+# NETWORK HEADER
 # =====================================================
 
 st.markdown(
     f"""
-    <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;">
-        <img src="{logo}" width="70">
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:25px;">
+        <img src="{logo}" width="120">
         <div>
             <h2 style="margin:0;">{chain_name}</h2>
-            <p style="margin:0;">Chain ID: {chain_id}</p>
+            <p style="margin:0;font-size:18px;">
+                Chain ID: {chain_id}
+            </p>
         </div>
     </div>
     """,
@@ -213,48 +262,119 @@ st.markdown(
 )
 
 # =====================================================
-# DATA
+# LOAD DATA
 # =====================================================
 
 try:
 
     data = fetch_stats(chain_id)
 
-    kpis = [
-        ("Average Block Time", data.get("average_block_time")),
-        ("Coin Price", data.get("coin_price")),
-        ("Coin Price Change %", data.get("coin_price_change_percentage")),
-        ("Gas Slow", data.get("gas_prices", {}).get("slow")),
-        ("Gas Average", data.get("gas_prices", {}).get("average")),
-        ("Gas Fast", data.get("gas_prices", {}).get("fast")),
-        ("Gas Used Today", data.get("gas_used_today")),
-        ("Market Cap", data.get("market_cap")),
-        ("Network Utilization %", data.get("network_utilization_percentage")),
-        ("Total Addresses", data.get("total_addresses")),
-        ("Total Blocks", data.get("total_blocks")),
-        ("Total Gas Used", data.get("total_gas_used")),
-        ("Total Transactions", data.get("total_transactions")),
-        ("Transactions Today", data.get("transactions_today")),
-        ("TVL", data.get("tvl")),
-        ("Gas Prices Update In", data.get("gas_prices_update_in"))
-    ]
+    # -------------------------------------------------
+    # NETWORK
+    # -------------------------------------------------
 
-    st.subheader("📊 Network KPIs")
+    st.subheader("⛓ Network")
 
-    cols = st.columns(4)
+    show_metrics([
+        ("Average Block Time",
+         data.get("average_block_time")),
 
-    for idx, (label, value) in enumerate(kpis):
+        ("Network Utilization %",
+         data.get("network_utilization_percentage")),
 
-        with cols[idx % 4]:
-            st.metric(
-                label=label,
-                value=format_number(value)
-            )
+        ("Total Blocks",
+         data.get("total_blocks")),
+
+        ("Gas Prices Update In",
+         data.get("gas_prices_update_in"))
+    ])
 
     st.divider()
 
-    st.subheader("📄 Raw API Response")
-    st.json(data)
+    # -------------------------------------------------
+    # ACTIVITY
+    # -------------------------------------------------
+
+    st.subheader("📈 Activity")
+
+    show_metrics([
+        ("Total Transactions",
+         data.get("total_transactions")),
+
+        ("Transactions Today",
+         data.get("transactions_today")),
+
+        ("Total Addresses",
+         data.get("total_addresses")),
+
+        ("Total Gas Used",
+         data.get("total_gas_used"))
+    ])
+
+    st.divider()
+
+    # -------------------------------------------------
+    # GAS
+    # -------------------------------------------------
+
+    st.subheader("⛽ Gas")
+
+    gas = data.get("gas_prices", {})
+
+    show_metrics([
+        ("Gas Slow",
+         gas.get("slow")),
+
+        ("Gas Average",
+         gas.get("average")),
+
+        ("Gas Fast",
+         gas.get("fast")),
+
+        ("Gas Used Today",
+         data.get("gas_used_today"))
+    ])
+
+    st.divider()
+
+    # -------------------------------------------------
+    # MARKET
+    # -------------------------------------------------
+
+    st.subheader("💰 Market")
+
+    show_metrics([
+        ("Coin Price",
+         data.get("coin_price")),
+
+        ("Coin Price Change %",
+         data.get("coin_price_change_percentage")),
+
+        ("Market Cap",
+         data.get("market_cap")),
+
+        ("TVL",
+         data.get("tvl"))
+    ])
+
+    st.divider()
+
+    # -------------------------------------------------
+    # LAST UPDATE
+    # -------------------------------------------------
+
+    st.caption(
+        f"Last gas update: "
+        f"{data.get('gas_price_updated_at')}"
+    )
+
+    # -------------------------------------------------
+    # RAW DATA
+    # -------------------------------------------------
+
+    with st.expander("🔍 View Raw API Response"):
+
+        st.json(data)
 
 except Exception as e:
 
