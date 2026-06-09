@@ -252,7 +252,7 @@ st.markdown(
         <img src="{logo}" width="50">
         <div>
             <h2 style="margin:0;">{chain_name}</h2>
-            <p style="margin:0;font-size:18px;">
+            <p style="margin:0;font-size:10px;">
                 Chain ID: {chain_id}
             </p>
         </div>
