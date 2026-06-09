@@ -249,7 +249,7 @@ logo = selected_chain["logo"]
 st.markdown(
     f"""
     <div style="display:flex;align-items:center;gap:20px;margin-bottom:25px;">
-        <img src="{logo}" width="200">
+        <img src="{logo}" width="50">
         <div>
             <h2 style="margin:0;">{chain_name}</h2>
             <p style="margin:0;font-size:18px;">
