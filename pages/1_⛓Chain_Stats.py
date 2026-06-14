@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
 import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # =====================================================
 # PAGE CONFIG
@@ -429,6 +432,22 @@ def fetch_stats(chain_id):
 
     return response.json()
 
+
+@st.cache_data(ttl=7200)
+def fetch_transactions_chart(chain_id):
+
+    url = (
+        f"https://api.blockscout.com/"
+        f"{chain_id}/api/v2/stats/charts/transactions"
+        f"?apikey={API_KEY}"
+    )
+
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+
+    return response.json()
+
+
 # =====================================================
 # KPI RENDER
 # =====================================================
@@ -609,7 +628,7 @@ try:
     # -------------------------------------------------
     # LAST UPDATE
     # -------------------------------------------------
- 
+
     st.caption(
         f"Last gas update: "
         f"{data.get('gas_price_updated_at')}"
@@ -622,6 +641,156 @@ try:
     with st.expander("🔍 View Raw API Response"):
 
         st.json(data)
+
+    # =====================================================
+    # TRANSACTIONS ANALYTICS
+    # =====================================================
+
+    st.divider()
+    st.subheader("📊 Transaction Analytics (Last 30 Days)")
+
+    tx_data = fetch_transactions_chart(chain_id)
+
+    chart_df = pd.DataFrame(tx_data["chart_data"])
+    chart_df["date"] = pd.to_datetime(chart_df["date"])
+    chart_df = chart_df.sort_values("date")
+
+    chart_df["transactions_count"] = chart_df["transactions_count"].astype(float)
+
+    latest_tx = chart_df.iloc[-1]["transactions_count"]
+    previous_tx = chart_df.iloc[-2]["transactions_count"]
+
+    tx_7d = chart_df.tail(7)["transactions_count"].sum()
+    tx_30d = chart_df["transactions_count"].sum()
+
+    max_tx = chart_df["transactions_count"].max()
+    min_tx = chart_df["transactions_count"].min()
+    avg_tx = chart_df["transactions_count"].mean()
+
+    daily_change_pct = ((latest_tx - previous_tx) / previous_tx) * 100
+
+    recent_7d_avg = chart_df.tail(7)["transactions_count"].mean()
+    previous_7d_avg = chart_df.iloc[-14:-7]["transactions_count"].mean()
+
+    weekly_change_pct = ((recent_7d_avg - previous_7d_avg) / previous_7d_avg) * 100
+
+    pct_from_ath = ((latest_tx - max_tx) / max_tx) * 100
+
+    show_metrics([
+        ("Transactions Last 24H", latest_tx),
+        ("Transactions Last 7D", tx_7d),
+        ("Transactions Last 30D", tx_30d)
+    ], cols=3)
+
+    show_metrics([
+        ("1D Change %", round(daily_change_pct, 2)),
+        ("7D Change %", round(weekly_change_pct, 2)),
+        ("% From ATH", round(pct_from_ath, 2))
+    ], cols=3)
+
+    show_metrics([
+        ("30D Max Daily Tx", max_tx),
+        ("30D Min Daily Tx", min_tx),
+        ("30D Avg Daily Tx", avg_tx)
+    ], cols=3)
+
+    chart_df["cumulative_tx"] = chart_df["transactions_count"].cumsum()
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig.add_trace(
+        go.Bar(
+            x=chart_df["date"],
+            y=chart_df["transactions_count"],
+            name="Daily Transactions"
+        ),
+        secondary_y=False
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=chart_df["date"],
+            y=chart_df["cumulative_tx"],
+            mode="lines+markers",
+            name="Cumulative Transactions"
+        ),
+        secondary_y=True
+    )
+
+    fig.update_layout(height=550, title="Daily Transactions & Cumulative Transactions")
+
+    fig.update_yaxes(title_text="Daily Transactions", secondary_y=False)
+    fig.update_yaxes(title_text="Cumulative Transactions", secondary_y=True)
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    chart_df["daily_change_pct"] = (
+        chart_df["transactions_count"].pct_change() * 100
+    ).fillna(0)
+
+    colors = np.where(chart_df["daily_change_pct"] >= 0, "green", "red")
+
+    chart_df["pct_from_ath"] = (
+        (chart_df["transactions_count"] - max_tx) / max_tx * 100
+    )
+
+    chart_df["pct_from_atl"] = (
+        (chart_df["transactions_count"] - min_tx) / min_tx * 100
+    )
+
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+
+        fig_change = go.Figure()
+
+        fig_change.add_trace(
+            go.Bar(
+                x=chart_df["date"],
+                y=chart_df["daily_change_pct"],
+                marker_color=colors
+            )
+        )
+
+        fig_change.update_layout(
+            height=500,
+            title="Daily Transaction Change %"
+        )
+
+        st.plotly_chart(fig_change, use_container_width=True)
+
+    with col_right:
+
+        fig_levels = go.Figure()
+
+        fig_levels.add_trace(
+            go.Scatter(
+                x=chart_df["date"],
+                y=chart_df["pct_from_ath"],
+                mode="lines+markers",
+                line=dict(color="red", width=3),
+                name="% From ATH"
+            )
+        )
+
+        fig_levels.add_trace(
+            go.Scatter(
+                x=chart_df["date"],
+                y=chart_df["pct_from_atl"],
+                mode="lines+markers",
+                line=dict(color="green", width=3),
+                name="% From ATL"
+            )
+        )
+
+        fig_levels.update_layout(
+            height=500,
+            title="Distance From ATH / ATL"
+        )
+
+        st.plotly_chart(fig_levels, use_container_width=True)
+
+
 
 except Exception as e:
 
