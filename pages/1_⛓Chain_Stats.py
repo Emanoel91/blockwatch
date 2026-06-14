@@ -607,13 +607,4 @@ try:
 
     st.divider()
 
-    # -------------------------------------------------
-    # LAST UPDATE
-    # -------------------------------------------------
-
-    st.caption(
-        f"Last gas update: "
-        f"{data.get('gas_price_updated_at')}"
-    )
-
     
