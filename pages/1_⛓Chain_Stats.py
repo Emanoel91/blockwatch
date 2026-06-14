@@ -53,21 +53,269 @@ div[data-testid="stMetricLabel"] {
 # =====================================================
 # NETWORKS
 # =====================================================
-# کل دیکشنری Mainnet و Testnet خودت را اینجا قرار بده
 
 NETWORKS = {
     "Mainnet": {
+        "Arbitrum Nova": {
+            "chain_id": 42170,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/arbitrum-nova.svg"
+        },
+        "Arbitrum One Nitro": {
+            "chain_id": 42161,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/arbitrum-one-nitro.svg"
+        },
+        "Astar": {
+            "chain_id": 592,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/astar.svg"
+        },
+        "Awaji": {
+            "chain_id": 6497,
+            "logo": "https://raw.githubusercontent.com/blockscout/frontend-configs/main/configs/network-icons/awaji-light.svg"
+        },
+        "Base": {
+            "chain_id": 8453,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/base.svg"
+        },
+        "BXN": {
+            "chain_id": 488,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/blackfort.svg"
+        },
+        "Celo": {
+            "chain_id": 42220,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/celo.svg"
+        },
+        "Creditcoin": {
+            "chain_id": 102030,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/creditcoin.svg"
+        },
+        "Cross Mainnet": {
+            "chain_id": 612055,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/cross.svg"
+        },
+        "Eden": {
+            "chain_id": 714,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/eden_testnet.svg"
+        },
+        "EDU Chain": {
+            "chain_id": 41923,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/edu-chain.svg"
+        },
         "Ethereum": {
             "chain_id": 1,
             "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum.svg"
+        },
+        "Ethereum Classic": {
+            "chain_id": 61,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum-classic.svg"
+        },
+        "Etherlink": {
+            "chain_id": 42793,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/etherlink.svg"
+        },
+        "Filecoin Virtual Machine": {
+            "chain_id": 314,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/filecoin.svg"
+        },
+        "Flow Mainnet": {
+            "chain_id": 747,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/flow.svg"
+        },
+        "Fuse": {
+            "chain_id": 122,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/fuse.svg"
+        },
+        "Gensyn": {
+            "chain_id": 685689,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/gensyn_testnet.png"
+        },
+        "Gnosis": {
+            "chain_id": 100,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/gnosis.svg"
+        },
+        "HashKey": {
+            "chain_id": 177,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/hashkey.svg"
+        },
+        "ICB Network": {
+            "chain_id": 73115,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/icb.svg"
+        },
+        "Immutable zkEVM": {
+            "chain_id": 13371,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Immutable_zkEVM.svg"
+        },
+        "Ink": {
+            "chain_id": 57073,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ink.svg"
+        },
+        "IOTA EVM": {
+            "chain_id": 8822,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/iota.svg"
+        },
+        "KiteAI Mainnet": {
+            "chain_id": 2366,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/kite.svg"
+        },
+        "LightLink Phoenix Mainnet": {
+            "chain_id": 1890,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/lightlink.svg"
+        },
+        "Lisk": {
+            "chain_id": 1135,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/lisk.svg"
+        },
+        "Matchain": {
+            "chain_id": 698,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/matchain.svg"
+        },
+        "MegaETH": {
+            "chain_id": 4326,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/megaeth.svg"
+        },
+        "Moca Chain": {
+            "chain_id": 2288,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/moca.svg"
+        },
+        "Mode": {
+            "chain_id": 34443,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/mode.svg"
+        },
+        "Neon": {
+            "chain_id": 245022934,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/neon.svg"
+        },
+        "Nexus Mainnet": {
+            "chain_id": 3946,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/nexus.png"
+        },
+        "Numine": {
+            "chain_id": 8021,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/numine.png"
+        },
+        "OP Mainnet": {
+            "chain_id": 10,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/op-mainnet.svg"
+        },
+        "Playnance Playblock": {
+            "chain_id": 1829,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/playblock.svg"
+        },
+        "Polygon PoS": {
+            "chain_id": 137,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/polygon-pos.svg"
+        },
+        "Reya": {
+            "chain_id": 1729,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/reya.svg"
+        },
+        "Rootstock": {
+            "chain_id": 30,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/rootstock.svg"
+        },
+        "Scroll": {
+            "chain_id": 534352,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/scroll.svg"
+        },
+        "Shape": {
+            "chain_id": 360,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/shape.svg"
+        },
+        "Shibarium": {
+            "chain_id": 109,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/shibarium.svg"
+        },
+        "Shimmer EVM Mainnet": {
+            "chain_id": 148,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/shimmer.svg"
+        },
+        "Soneium": {
+            "chain_id": 1868,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/soneium.svg"
+        },
+        "Story": {
+            "chain_id": 1514,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/story.svg"
+        },
+        "TAC Mainnet": {
+            "chain_id": 239,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/tac.jpg"
+        },
+        "Unichain": {
+            "chain_id": 130,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Unichain.svg"
+        },
+        "World Chain": {
+            "chain_id": 480,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/world-chain.svg"
+        },
+        "World Mobile": {
+            "chain_id": 869,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/world_mobile.svg"
+        },
+        "ZetaChain": {
+            "chain_id": 7000,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zeta.svg"
+        },
+        "Zilliqa 2 Mainnet": {
+            "chain_id": 32769,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zilliqa.svg"
+        },
+        "ZKsync Era": {
+            "chain_id": 324,
+            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zksync-era.svg"
         }
     },
 
     "Testnet": {
-        "Arc Testnet": {
-            "chain_id": 5042002,
-            "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Arc.svg"
-        }
+        "Alchemy Sepolia": {"chain_id": 69420, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/alchemy.svg"},
+        "Arbitrum Sepolia": {"chain_id": 421614, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/arbitrum.svg"},
+        "Arc Testnet": {"chain_id": 5042002, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Arc.svg"},
+        "Astar Shibuya": {"chain_id": 81, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/astar.svg"},
+        "Base Sepolia": {"chain_id": 84532, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/base-sepolia.svg"},
+        "BXN Testnet": {"chain_id": 4888, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/blackfort.svg"},
+        "Celo Sepolia": {"chain_id": 11142220, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/celo.svg"},
+        "Creditcoin Devnet": {"chain_id": 102032, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/creditcoin.svg"},
+        "Creditcoin Testnet": {"chain_id": 102031, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/creditcoin.svg"},
+        "Cross Testnet": {"chain_id": 612044, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/cross.svg"},
+        "Eden Testnet": {"chain_id": 3735928814, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/eden_testnet.svg"},
+        "EDU Chain Testnet": {"chain_id": 656476, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/edu-chain.svg"},
+        "Ethereum Classic Mordor": {"chain_id": 63, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum-classic.svg"},
+        "Ethereum Sepolia": {"chain_id": 11155111, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ethereum.svg"},
+        "Etherlink Shadownet": {"chain_id": 127823, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/etherlink.svg"},
+        "Filecoin Calibration Testnet": {"chain_id": 314159, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/filecoin.svg"},
+        "Flow Testnet": {"chain_id": 545, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/flow.svg"},
+        "Fuse Sparknet": {"chain_id": 123, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/fuse.svg"},
+        "Gensyn Testnet": {"chain_id": 685685, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/gensyn_testnet.png"},
+        "Gnosis Chiado Testnet": {"chain_id": 10200, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/gnosis.svg"},
+        "Hoodi": {"chain_id": 560048, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/hoodi.png"},
+        "ICB Network Testnet": {"chain_id": 73114, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/icb.svg"},
+        "Immutable zkEVM Testnet": {"chain_id": 13473, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Immutable_zkEVM.svg"},
+        "Ink Sepolia": {"chain_id": 763373, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/ink.svg"},
+        "IOTA EVM Testnet": {"chain_id": 1076, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/iota.svg"},
+        "KiteAI Testnet": {"chain_id": 2368, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/kite.svg"},
+        "LightLink Pegasus Testnet": {"chain_id": 1891, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/lightlink.svg"},
+        "Lisk Sepolia Testnet": {"chain_id": 4202, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/lisk.svg"},
+        "MegaETH Testnet v2": {"chain_id": 6343, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/megaeth.svg"},
+        "Moca Chain Testnet": {"chain_id": 222888, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/moca.svg"},
+        "Neon Devnet": {"chain_id": 245022926, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/neon.svg"},
+        "Nexus Staging Testnet": {"chain_id": 3941, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/nexus.png"},
+        "Nexus Testnet": {"chain_id": 3945, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/nexus.png"},
+        "OP Sepolia": {"chain_id": 11155420, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/op-mainnet.svg"},
+        "Reya Cronos": {"chain_id": 89346162, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/reya.svg"},
+        "Rootstock Testnet": {"chain_id": 31, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/rootstock.svg"},
+        "Scroll Testnet": {"chain_id": 534351, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/scroll.svg"},
+        "Shape Testnet": {"chain_id": 11011, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/shape.svg"},
+        "Shimmer EVM Testnet": {"chain_id": 1073, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/shimmer.svg"},
+        "Soneium Minato Testnet": {"chain_id": 1946, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/soneium.svg"},
+        "Story Aeneid": {"chain_id": 1315, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/story.svg"},
+        "TAC SPB": {"chain_id": 2391, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/tac.jpg"},
+        "Unichain Sepolia Testnet": {"chain_id": 1301, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/Unichain.svg"},
+        "World Chain Testnet": {"chain_id": 4801, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/world-chain.svg"},
+        "World Mobile Testnet": {"chain_id": 323432, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/world_mobile.svg"},
+        "Zenchain Testnet": {"chain_id": 8408, "logo": "https://cdn.prod.website-files.com/644a5b7efad46e3cd70deafb/672e2004ecbf024c711f68a8_ZenChain.png"},
+        "ZetaChain Testnet": {"chain_id": 7001, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zeta.svg"},
+        "Zilliqa 2 Testnet": {"chain_id": 33101, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zilliqa.svg"},
+        "ZKsync Era Sepolia Testnet": {"chain_id": 300, "logo": "https://blockscout-icons.s3.us-east-1.amazonaws.com/zksync-era.svg"}
     }
 }
 
