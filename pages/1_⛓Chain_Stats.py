@@ -616,14 +616,4 @@ try:
         f"{data.get('gas_price_updated_at')}"
     )
 
-    # -------------------------------------------------
-    # RAW DATA
-    # -------------------------------------------------
-
-    with st.expander("🔍 View Raw API Response"):
-
-        st.json(data)
-
-except Exception as e:
-
-    st.error(f"Failed to load data: {e}")
+    
