@@ -721,7 +721,7 @@ try:
 
     fig.update_layout(
         height=550,
-        title="Daily Transactions & Cumulative Transactions",
+        title="Number of Transactions Over Time (30D)",
     
         legend=dict(
             orientation="h",
