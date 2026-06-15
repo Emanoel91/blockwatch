@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 # =====================================================
 
 st.set_page_config(
-    page_title="Blockscout Multi-Chain Dashboard",
+    page_title="Blockwatch",
     layout="wide"
 )
 
