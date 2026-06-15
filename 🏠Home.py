@@ -58,22 +58,31 @@ If you find this dashboard useful, you can support its continued development:
 
 🔹 **BTC**
 `bc1q7e9zzycg7v3jv9kwyyfh36fn6pyu66u2gl4qw8`
+
 🔹 **EVM Wallet**
 `0x621bd661e3d57da1c8237209824827f1027abf62`
+
 🔹 **TRX**
 `TQfmrWo9aruHca5F8mY9kGFmw9QWPeqDmG`
+
 🔹 **XRP**
 `rfxW1su8sUfMDgn2b4CHuJL7a2QCaFRuVU`
+
 🔹 **DOGE**
 `DLQp6B1uSg3q88HEPzs6LMmNRe9SfrnoTa`
+
 🔹 **ADA**
 `addr1qxn4y5p7868xkujncnmlnmlvfn9gh3l2tprtplszmfsaxk2yq56pag74w2r5c8hst9u7r475q9txktxxrzfvg6stwhvsmwcxnk`
+
 🔹 **TON**
 `UQDjWh05M38wVF2pGrJumg0p69nqzGTt0M4JSfKpZQgRObwA`
+
 🔹 **SOL**
 `5jgXpaVEoBsvVWseMts983PaDoDUNTzrJFfwhQLUGhsg`
+
 🔹 **SUI**
 `0x746efae6a71fa29b396354d853f93b441a0ef74997e6223a3ee9c6d0c2f99cd2`
+
 🔹 **APT**
 `0xad18c16889eb251359e14727079181cf10a576acd39b1aaf07abec198a38549e`
 
