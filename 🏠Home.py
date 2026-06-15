@@ -43,7 +43,27 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+# ========================================================
+# Donation
+# ========================================================
 
+def render_donate_box():
+    donate_text = """
+💖 **Support This Project**
+
+If you find this dashboard useful, you can support its continued development:
+
+⛓ **EVM Wallet**
+`0xD61338FD377816538a1E17eeA18D49512a37719a`
+
+🌐 **Solana Wallet**
+`ApHkGf2PiQSV9CRzbcmMkFi15q2bfhnSKnxUFatbygR4`
+
+🚀 Your support helps improve data coverage, add new chains, and enhance analytics features.
+"""
+    st.info(donate_text)
+
+render_donate_box()
 
 # --- Sidebar Footer Slightly Left-Aligned ---
 st.sidebar.markdown(
