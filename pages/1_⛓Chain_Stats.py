@@ -699,30 +699,50 @@ try:
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     fig.add_trace(
-        go.Bar(
-            x=chart_df["date"],
-            y=chart_df["transactions_count"],
-            name="Daily Transactions"
-        ),
-        secondary_y=False
+    go.Bar(
+        x=chart_df["date"],
+        y=chart_df["transactions_count"],
+        name="Daily Transactions",
+        marker_color="#0b48b1"   
+    ),
+    secondary_y=False
+)
+
+fig.add_trace(
+    go.Scatter(
+        x=chart_df["date"],
+        y=chart_df["cumulative_tx"],
+        mode="lines",        
+        name="Cumulative Transactions",
+        line=dict(color="black")
+    ),
+    secondary_y=True
+)
+
+fig.update_layout(
+    height=550,
+    title="Daily Transactions & Cumulative Transactions",
+    
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="center",
+        x=0.5
     )
+)
 
-    fig.add_trace(
-        go.Scatter(
-            x=chart_df["date"],
-            y=chart_df["cumulative_tx"],
-            mode="lines+markers",
-            name="Cumulative Transactions"
-        ),
-        secondary_y=True
-    )
+fig.update_yaxes(
+    title_text="Txns Count",
+    secondary_y=False
+)
 
-    fig.update_layout(height=550, title="Daily Transactions & Cumulative Transactions")
+fig.update_yaxes(
+    title_text="Txns Count",
+    secondary_y=True
+)
 
-    fig.update_yaxes(title_text="Daily Transactions", secondary_y=False)
-    fig.update_yaxes(title_text="Cumulative Transactions", secondary_y=True)
-
-    st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
     chart_df["daily_change_pct"] = (
         chart_df["transactions_count"].pct_change() * 100
