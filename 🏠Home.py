@@ -48,24 +48,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Reference and Rebuild Info ---
-
-# --- Links with Logos ---
-st.markdown(
-    """
-    <div style="font-size: 16px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="https://axelarscan.io/logos/logo.png" alt="Axelar" style="width:20px; height:20px;">
-            <a href="https://www.axelar.network/" target="_blank">Axelar Website</a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="https://axelarscan.io/logos/logo.png" alt="X" style="width:20px; height:20px;">
-            <a href="https://x.com/axelar" target="_blank">Axelar X Account</a>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 # --- Sidebar Footer Slightly Left-Aligned ---
 st.sidebar.markdown(
@@ -94,12 +76,6 @@ st.sidebar.markdown(
     </style>
 
     <div class="sidebar-footer">
-        <div>
-            <a href="https://x.com/axelar" target="_blank">
-                <img src="https://img.cryptorank.io/coins/axelar1663924228506.png" alt="Axelar Logo">
-                Powered by Axelar
-            </a>
-        </div>
         <div style="margin-top: 5px;">
             <a href="https://x.com/0xeman_raz" target="_blank">
                 <img src="https://pbs.twimg.com/profile_images/2060406047391559681/sA9zPNKM_400x400.jpg" alt="Eman Raz">
