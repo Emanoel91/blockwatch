@@ -11,8 +11,8 @@ st.set_page_config(
 st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 15px;">
-        <img src="https://axelarscan.io/logos/logo.png" alt="axelar" style="width:60px; height:60px;">
-        <h1 style="margin: 0;">Axelar Mega Dashboard</h1>
+        <img src="https://raw.githubusercontent.com/Emanoel91/blockwatch/main/logo_blockwatch_no_text.png" alt="axelar" style="width:60px; height:60px;">
+        <h1 style="margin: 0;">Blockwatch</h1>
     </div>
     """,
     unsafe_allow_html=True
