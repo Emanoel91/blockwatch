@@ -2,8 +2,8 @@ import streamlit as st
 
 # --- Page Config: Tab Title & Icon ---
 st.set_page_config(
-    page_title="blockwatch",
-    page_icon="https://axelarscan.io/logos/logo.png",
+    page_title="Blockwatch",
+    page_icon="https://raw.githubusercontent.com/Emanoel91/blockwatch/main/logo_blockwatch_no_text.png",
     layout="wide"
 )
 
