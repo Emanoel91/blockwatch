@@ -474,10 +474,10 @@ def show_metrics(metrics, cols=4):
 # HEADER
 # =====================================================
 
-st.title("🌐 Blockscout Multi-Chain Dashboard")
+st.title("⛓Chain Stats")
 
 st.info(
-    "Select a blockchain network to view live Blockscout statistics."
+    "📊 Select a blockchain to view live statistics."
 )
 
 # =====================================================
