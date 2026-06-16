@@ -74,7 +74,7 @@ If you find this dashboard useful, you can support its continued development:
 🔹 **ADA**
 `addr1qxn4y5p7868xkujncnmlnmlvfn9gh3l2tprtplszmfsaxk2yq56pag74w2r5c8hst9u7r475q9txktxxrzfvg6stwhvsmwcxnk`
 
-🔹 **TON**
+🔹 **GRAM**
 `UQDjWh05M38wVF2pGrJumg0p69nqzGTt0M4JSfKpZQgRObwA`
 
 🔹 **SOL**
