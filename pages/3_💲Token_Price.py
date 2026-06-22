@@ -545,123 +545,97 @@ if st.button(
         avg_price = df_chart["price"].mean()
 
         # ---------------------------------------------
-# Price Chart
-# ---------------------------------------------
+        # Price Chart
+        # ---------------------------------------------
 
-fig = px.line(
-    df_chart,
-    x="datetime",
-    y="price",
-    title=f"{symbol} Price History"
-)
+        fig = px.line(
+            df_chart,
+            x="datetime",
+            y="price",
+            title=f"{symbol} Price History"
+        )
 
-fig.update_traces(
-    line_width=3
-)
+        fig.update_traces(
+            line_width=3
+        )
 
-fig.update_layout(
-    height=600,
-    xaxis_title="Date",
-    yaxis_title="Price (USD)",
-    hovermode="x unified"
-)
+        fig.update_layout(
+            height=600,
+            xaxis_title="Date",
+            yaxis_title="Price (USD)",
+            hovermode="x unified"
+        )
 
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-# ---------------------------------------------
-# Statistics
-# ---------------------------------------------
+        # ---------------------------------------------
+        # KPI Row 1
+        # ---------------------------------------------
 
-first_price = df_chart["price"].iloc[0]
+        col1, col2, col3 = st.columns(3)
 
-last_price = df_chart["price"].iloc[-1]
+        with col1:
+            st.metric(
+                "Start Price",
+                f"${first_price:,.6f}"
+            )
 
-change_pct = (
-    (last_price - first_price)
-    / first_price
-) * 100
+        with col2:
+            st.metric(
+                "End Price",
+                f"${last_price:,.6f}"
+            )
 
-ath_price = df_chart["price"].max()
+        with col3:
+            st.metric(
+                "Change %",
+                f"{change_pct:.2f}%"
+            )
 
-atl_price = df_chart["price"].min()
+        # ---------------------------------------------
+        # KPI Row 2
+        # ---------------------------------------------
 
-avg_price = df_chart["price"].mean()
+        col4, col5, col6 = st.columns(3)
 
-# ---------------------------------------------
-# KPI Row 1
-# ---------------------------------------------
+        with col4:
+            st.metric(
+                "ATH Price",
+                f"${ath_price:,.6f}"
+            )
 
-col1, col2, col3 = st.columns(3)
+        with col5:
+            st.metric(
+                "ATL Price",
+                f"${atl_price:,.6f}"
+            )
 
-with col1:
-    st.metric(
-        "Start Price",
-        f"${first_price:,.6f}"
-    )
+        with col6:
+            st.metric(
+                "Avg Price",
+                f"${avg_price:,.6f}"
+            )
 
-with col2:
-    st.metric(
-        "End Price",
-        f"${last_price:,.6f}"
-    )
+    except Exception as e:
 
-with col3:
-    st.metric(
-        "Change %",
-        f"{change_pct:.2f}%"
-    )
-
-# ---------------------------------------------
-# KPI Row 2
-# ---------------------------------------------
-
-col4, col5, col6 = st.columns(3)
-
-with col4:
-    st.metric(
-        "ATH Price",
-        f"${ath_price:,.6f}"
-    )
-
-with col5:
-    st.metric(
-        "ATL Price",
-        f"${atl_price:,.6f}"
-    )
-
-with col6:
-    st.metric(
-        "Avg Price",
-        f"${avg_price:,.6f}"
-    )
+        st.error(f"Error: {e}")
 
 # ---------------------------------------------
-# Daily Candlestick Chart
+# DAILY CANDLESTICK CHART
 # ---------------------------------------------
 
 st.subheader("🕯️ Daily Candlestick Chart")
 
-if period == "1D":
-
-    st.info(
-        "For meaningful candlesticks, use 1H, 4H or 12H intervals."
-    )
-
 df_daily = df_chart.copy()
 
-df_daily["date"] = (
-    df_daily["datetime"]
-    .dt
-    .floor("D")
-)
+df_daily["date"] = df_daily["datetime"].dt.date
 
 ohlc = (
     df_daily
-    .groupby("date")
-    ["price"]
+    .groupby("date")["price"]
     .agg(
         Open="first",
         High="max",
@@ -671,29 +645,27 @@ ohlc = (
     .reset_index()
 )
 
-if len(ohlc) > 0:
+candlestick_fig = go.Figure(
+    data=[
+        go.Candlestick(
+            x=ohlc["date"],
+            open=ohlc["Open"],
+            high=ohlc["High"],
+            low=ohlc["Low"],
+            close=ohlc["Close"]
+        )
+    ]
+)
 
-    candle_fig = go.Figure(
-        data=[
-            go.Candlestick(
-                x=ohlc["date"],
-                open=ohlc["Open"],
-                high=ohlc["High"],
-                low=ohlc["Low"],
-                close=ohlc["Close"]
-            )
-        ]
-    )
+candlestick_fig.update_layout(
+    title=f"{symbol} Daily OHLC",
+    height=700,
+    xaxis_title="Date",
+    yaxis_title="Price (USD)",
+    xaxis_rangeslider_visible=False
+)
 
-    candle_fig.update_layout(
-        title=f"{symbol} Daily OHLC",
-        height=700,
-        xaxis_title="Date",
-        yaxis_title="Price (USD)",
-        xaxis_rangeslider_visible=False
-    )
-
-    st.plotly_chart(
-        candle_fig,
-        use_container_width=True
-    )
+st.plotly_chart(
+    candlestick_fig,
+    use_container_width=True
+)
