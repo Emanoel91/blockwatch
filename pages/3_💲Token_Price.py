@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🪙 Token Price")
+st.title("💲Token Price")
 
 # =====================================================
 # CUSTOM CSS
