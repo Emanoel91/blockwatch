@@ -192,3 +192,133 @@ if st.button("Get Token Price", use_container_width=True):
 # ===================================================================== Part II ================================================================
 st.divider()
 st.header("📅 Historical Token Price")
+# =====================================================
+# SECTION 2 : HISTORICAL TOKEN PRICE
+# =====================================================
+
+from datetime import datetime, timezone
+
+st.divider()
+st.header("📅 Historical Token Price")
+
+# -----------------------------------------------------
+# API
+# -----------------------------------------------------
+
+@st.cache_data(ttl=300)
+def get_historical_price(chain, address, timestamp):
+
+    coin = f"{chain}:{address}"
+
+    url = f"https://coins.llama.fi/prices/historical/{timestamp}/{coin}"
+
+    response = requests.get(url, timeout=20)
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data["coins"].get(coin)
+
+
+# -----------------------------------------------------
+# INPUTS
+# -----------------------------------------------------
+
+h_col1, h_col2 = st.columns(2)
+
+with h_col1:
+    historical_chain = st.text_input(
+        "Blockchain ",
+        placeholder="ethereum",
+        key="historical_chain"
+    )
+
+with h_col2:
+    historical_address = st.text_input(
+        "Token Address ",
+        placeholder="0x514910771AF9Ca656af840dff83E8264EcF986CA",
+        key="historical_address"
+    )
+
+selected_date = st.date_input(
+    "Select Date",
+    value=datetime.utcnow().date(),
+    key="historical_date"
+)
+
+# -----------------------------------------------------
+# BUTTON
+# -----------------------------------------------------
+
+if st.button(
+    "Get Historical Price",
+    use_container_width=True,
+    key="historical_button"
+):
+
+    try:
+
+        dt = datetime.combine(
+            selected_date,
+            datetime.min.time()
+        ).replace(tzinfo=timezone.utc)
+
+        timestamp = int(dt.timestamp())
+
+        token = get_historical_price(
+            historical_chain,
+            historical_address,
+            timestamp
+        )
+
+        if token is None:
+
+            st.error("Historical price not found.")
+            st.stop()
+
+        symbol = token.get("symbol", "Unknown")
+        price = float(token.get("price", 0))
+        confidence = token.get("confidence", 0)
+        actual_timestamp = token.get("timestamp")
+
+        actual_date = datetime.utcfromtimestamp(
+            actual_timestamp
+        ).strftime("%Y-%m-%d %H:%M UTC")
+
+        # -------------------------------------------------
+        # MAIN KPI
+        # -------------------------------------------------
+
+        st.metric(
+            label=f"{symbol} Historical Price",
+            value=f"${price:,.6f}"
+        )
+
+        # -------------------------------------------------
+        # DETAILS
+        # -------------------------------------------------
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.metric(
+                "Symbol",
+                symbol
+            )
+
+        with c2:
+            st.metric(
+                "Confidence",
+                f"{confidence:.2%}"
+            )
+
+        with c3:
+            st.metric(
+                "Price Timestamp",
+                actual_date
+            )
+
+    except Exception as e:
+
+        st.error(f"Error: {e}")
