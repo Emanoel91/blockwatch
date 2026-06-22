@@ -526,15 +526,23 @@ if st.button(
         )
 
         # ---------------------------------------------
-        # KPI
+        # Calculate Statistics
         # ---------------------------------------------
 
-        latest_price = df_chart["price"].iloc[-1]
+        first_price = df_chart["price"].iloc[0]
 
-        st.metric(
-            f"Latest {symbol} Price",
-            f"${latest_price:,.6f}"
-        )
+        last_price = df_chart["price"].iloc[-1]
+
+        change_pct = (
+            (last_price - first_price)
+            / first_price
+        ) * 100
+
+        ath_price = df_chart["price"].max()
+
+        atl_price = df_chart["price"].min()
+
+        avg_price = df_chart["price"].mean()
 
         # ---------------------------------------------
         # Price Chart
@@ -564,18 +572,8 @@ if st.button(
         )
 
         # ---------------------------------------------
-        # Statistics
+        # KPI Row 1
         # ---------------------------------------------
-
-        first_price = df_chart["price"].iloc[0]
-
-        change_pct = (
-            (
-                latest_price
-                - first_price
-            )
-            / first_price
-        ) * 100
 
         col1, col2, col3 = st.columns(3)
 
@@ -588,13 +586,37 @@ if st.button(
         with col2:
             st.metric(
                 "End Price",
-                f"${latest_price:,.6f}"
+                f"${last_price:,.6f}"
             )
 
         with col3:
             st.metric(
                 "Change %",
                 f"{change_pct:.2f}%"
+            )
+
+        # ---------------------------------------------
+        # KPI Row 2
+        # ---------------------------------------------
+
+        col4, col5, col6 = st.columns(3)
+
+        with col4:
+            st.metric(
+                "ATH Price",
+                f"${ath_price:,.6f}"
+            )
+
+        with col5:
+            st.metric(
+                "ATL Price",
+                f"${atl_price:,.6f}"
+            )
+
+        with col6:
+            st.metric(
+                "Avg Price",
+                f"${avg_price:,.6f}"
             )
 
     except Exception as e:
