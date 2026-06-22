@@ -188,3 +188,7 @@ if st.button("Get Token Price", use_container_width=True):
     except Exception as e:
 
         st.error(f"Error: {e}")
+
+# ===================================================================== Part II ================================================================
+st.divider()
+st.header("📅 Historical Token Price")
