@@ -337,7 +337,7 @@ st.divider()
 st.header("📈 Token Price Chart")
 
 # -----------------------------------------------------
-# API
+# API (Main Chart)
 # -----------------------------------------------------
 
 @st.cache_data(ttl=300)
@@ -359,12 +359,36 @@ def get_price_chart(
         "span": span
     }
 
-    response = requests.get(
-        url,
-        params=params,
-        timeout=30
-    )
+    response = requests.get(url, params=params, timeout=30)
+    response.raise_for_status()
 
+    data = response.json()
+
+    return data["coins"].get(coin)
+
+# -----------------------------------------------------
+# API (Independent Candlestick - ALWAYS 4H)
+# -----------------------------------------------------
+
+@st.cache_data(ttl=300)
+def get_candle_4h(
+    chain,
+    address,
+    start_ts,
+    span
+):
+
+    coin = f"{chain}:{address}"
+
+    url = f"https://coins.llama.fi/chart/{coin}"
+
+    params = {
+        "start": start_ts,
+        "period": "4H",
+        "span": span
+    }
+
+    response = requests.get(url, params=params, timeout=30)
     response.raise_for_status()
 
     data = response.json()
@@ -394,27 +418,15 @@ with c2:
 d1, d2, d3 = st.columns(3)
 
 with d1:
-    start_date = st.date_input(
-        "Start Date",
-        key="chart_start"
-    )
+    start_date = st.date_input("Start Date", key="chart_start")
 
 with d2:
-    end_date = st.date_input(
-        "End Date",
-        key="chart_end"
-    )
+    end_date = st.date_input("End Date", key="chart_end")
 
 with d3:
     period = st.selectbox(
-        "Interval",
-        [
-            "1H",
-            "4H",
-            "12H",
-            "1D",
-            "7D"
-        ],
+        "Interval (Main Chart)",
+        ["1H", "4H", "12H", "1D", "7D"],
         index=3,
         key="chart_period"
     )
@@ -423,49 +435,35 @@ with d3:
 # BUTTON
 # -----------------------------------------------------
 
-if st.button(
-    "Generate Price Chart",
-    use_container_width=True,
-    key="chart_button"
-):
+if st.button("Generate Price Chart", use_container_width=True):
 
     try:
 
-        # ---------------------------------------------
-        # Convert Dates To Unix Timestamp
-        # ---------------------------------------------
+        # -----------------------------
+        # Time conversion
+        # -----------------------------
 
         start_ts = int(
-            datetime.combine(
-                start_date,
-                datetime.min.time()
-            ).replace(
-                tzinfo=timezone.utc
-            ).timestamp()
+            datetime.combine(start_date, datetime.min.time())
+            .replace(tzinfo=timezone.utc)
+            .timestamp()
         )
 
         end_ts = int(
-            datetime.combine(
-                end_date,
-                datetime.min.time()
-            ).replace(
-                tzinfo=timezone.utc
-            ).timestamp()
+            datetime.combine(end_date, datetime.min.time())
+            .replace(tzinfo=timezone.utc)
+            .timestamp()
         )
 
         if end_ts <= start_ts:
-
-            st.error(
-                "End Date must be after Start Date."
-            )
-
+            st.error("End Date must be after Start Date")
             st.stop()
 
-        # ---------------------------------------------
-        # Calculate Span
-        # ---------------------------------------------
+        # -----------------------------
+        # Span for main chart
+        # -----------------------------
 
-        seconds_per_period = {
+        seconds_map = {
             "1H": 3600,
             "4H": 14400,
             "12H": 43200,
@@ -473,19 +471,13 @@ if st.button(
             "7D": 604800
         }
 
-        period_seconds = seconds_per_period[period]
-
-        span = int(
-            (end_ts - start_ts)
-            / period_seconds
-        )
-
+        span = int((end_ts - start_ts) / seconds_map[period])
         if span < 1:
             span = 1
 
-        # ---------------------------------------------
-        # Fetch Data
-        # ---------------------------------------------
+        # -----------------------------
+        # MAIN LINE DATA
+        # -----------------------------
 
         token = get_price_chart(
             chart_chain,
@@ -496,58 +488,31 @@ if st.button(
         )
 
         if token is None:
-
-            st.error(
-                "No chart data found."
-            )
-
+            st.error("No chart data found")
             st.stop()
 
         symbol = token["symbol"]
-
         prices = token["prices"]
 
-        if len(prices) == 0:
-
-            st.warning(
-                "No price data available."
-            )
-
-            st.stop()
-
-        # ---------------------------------------------
-        # Create DataFrame
-        # ---------------------------------------------
-
         df_chart = pd.DataFrame(prices)
+        df_chart["datetime"] = pd.to_datetime(df_chart["timestamp"], unit="s")
 
-        df_chart["datetime"] = pd.to_datetime(
-            df_chart["timestamp"],
-            unit="s"
-        )
-
-        # ---------------------------------------------
+        # -----------------------------
         # Statistics
-        # ---------------------------------------------
+        # -----------------------------
 
         first_price = df_chart["price"].iloc[0]
-
         last_price = df_chart["price"].iloc[-1]
 
-        change_pct = (
-            (last_price - first_price)
-            / first_price
-        ) * 100
+        change_pct = ((last_price - first_price) / first_price) * 100
 
         ath_price = df_chart["price"].max()
-
         atl_price = df_chart["price"].min()
-
         avg_price = df_chart["price"].mean()
 
-        # ---------------------------------------------
-        # Line Chart
-        # ---------------------------------------------
+        # -----------------------------
+        # LINE CHART (User Interval)
+        # -----------------------------
 
         fig = px.line(
             df_chart,
@@ -556,111 +521,80 @@ if st.button(
             title=f"{symbol} Price History"
         )
 
-        fig.update_traces(
-            line_width=3
-        )
+        fig.update_traces(line_width=3)
+        fig.update_layout(height=600, hovermode="x unified")
 
-        fig.update_layout(
-            height=600,
-            xaxis_title="Date",
-            yaxis_title="Price (USD)",
-            hovermode="x unified"
-        )
+        st.plotly_chart(fig, use_container_width=True)
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-        # ---------------------------------------------
-        # KPI Row 1
-        # ---------------------------------------------
+        # -----------------------------
+        # KPI ROW 1
+        # -----------------------------
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                "Start Price",
-                f"${first_price:,.6f}"
-            )
+            st.metric("Start Price", f"${first_price:,.6f}")
 
         with col2:
-            st.metric(
-                "End Price",
-                f"${last_price:,.6f}"
-            )
+            st.metric("End Price", f"${last_price:,.6f}")
 
         with col3:
-            st.metric(
-                "Change %",
-                f"{change_pct:.2f}%"
-            )
+            st.metric("Change %", f"{change_pct:.2f}%")
 
-        # ---------------------------------------------
-        # KPI Row 2
-        # ---------------------------------------------
+        # -----------------------------
+        # KPI ROW 2
+        # -----------------------------
 
         col4, col5, col6 = st.columns(3)
 
         with col4:
-            st.metric(
-                "ATH Price",
-                f"${ath_price:,.6f}"
-            )
+            st.metric("ATH Price", f"${ath_price:,.6f}")
 
         with col5:
-            st.metric(
-                "ATL Price",
-                f"${atl_price:,.6f}"
-            )
+            st.metric("ATL Price", f"${atl_price:,.6f}")
 
         with col6:
-            st.metric(
-                "Avg Price",
-                f"${avg_price:,.6f}"
-            )
+            st.metric("Avg Price", f"${avg_price:,.6f}")
 
-        # ---------------------------------------------
-        # Daily Candlestick Chart
-        # ---------------------------------------------
+        # =================================================
+        # CANDLESTICK CHART (INDEPENDENT 4H)
+        # =================================================
 
-        st.subheader("🕯️ Daily Candlestick Chart")
+        st.subheader("🕯️ Candlestick Chart (4H Independent)")
 
-        if period == "1D":
+        candle_span = int((end_ts - start_ts) / (4 * 3600))
+        if candle_span < 1:
+            candle_span = 1
 
-            st.info(
-                "For meaningful candlesticks, use 1H, 4H or 12H intervals."
-            )
-
-        if len(df_chart) > 5000:
-
-            st.warning(
-                "Too many data points for candlestick chart. Consider increasing interval."
-            )
-
-        df_daily = df_chart.copy()
-
-        df_daily["date"] = (
-            df_daily["datetime"]
-            .dt
-            .floor("D")
+        candle_token = get_candle_4h(
+            chart_chain,
+            chart_address,
+            start_ts,
+            candle_span
         )
 
-        ohlc = (
-            df_daily
-            .groupby("date")["price"]
-            .agg(
-                Open="first",
-                High="max",
-                Low="min",
-                Close="last"
+        if candle_token is not None:
+
+            candle_prices = candle_token["prices"]
+
+            df_candle = pd.DataFrame(candle_prices)
+            df_candle["datetime"] = pd.to_datetime(df_candle["timestamp"], unit="s")
+
+            df_candle["date"] = df_candle["datetime"].dt.floor("D")
+
+            ohlc = (
+                df_candle
+                .groupby("date")["price"]
+                .agg(
+                    Open="first",
+                    High="max",
+                    Low="min",
+                    Close="last"
+                )
+                .reset_index()
             )
-            .reset_index()
-        )
 
-        if len(ohlc) > 0:
-
-            candle_fig = go.Figure(
+            fig_candle = go.Figure(
                 data=[
                     go.Candlestick(
                         x=ohlc["date"],
@@ -672,19 +606,14 @@ if st.button(
                 ]
             )
 
-            candle_fig.update_layout(
-                title=f"{symbol} Daily OHLC",
+            fig_candle.update_layout(
                 height=700,
                 xaxis_title="Date",
                 yaxis_title="Price (USD)",
                 xaxis_rangeslider_visible=False
             )
 
-            st.plotly_chart(
-                candle_fig,
-                use_container_width=True
-            )
+            st.plotly_chart(fig_candle, use_container_width=True)
 
     except Exception as e:
-
         st.error(f"Error: {e}")
