@@ -617,3 +617,216 @@ if st.button("Generate Price Chart", use_container_width=True):
 
     except Exception as e:
         st.error(f"Error: {e}")
+
+# ================================================================= Deep Analysis ==================================================================
+# =====================================================
+# INDICATORS PANEL
+# =====================================================
+
+st.subheader("📊 Technical Indicators")
+
+indicator_list = [
+    "SMA", "EMA", "WMA",
+    "RSI", "MACD",
+    "Bollinger Bands",
+    "ROC",
+    "Momentum",
+    "Z-Score",
+    "Returns",
+    "Log Returns",
+    "Rolling Mean",
+    "Rolling Std",
+    "ATR (Approx)",
+    "Donchian Channels",
+    "Keltner Channels",
+    "Pivot Points",
+    "Regression Channel",
+    "Volatility",
+    "Support/Resistance"
+]
+
+selected_indicators = st.multiselect(
+    "Select Indicators",
+    indicator_list,
+    default=["SMA", "EMA"]
+)
+
+import numpy as np
+
+df_ind = df_chart.copy()
+
+df_ind["returns"] = df_ind["price"].pct_change()
+df_ind["log_returns"] = np.log(df_ind["price"]).diff()
+
+window = 14
+rolling = 20
+
+# =========================
+# Moving Averages
+# =========================
+
+df_ind["SMA"] = df_ind["price"].rolling(20).mean()
+df_ind["EMA"] = df_ind["price"].ewm(span=20).mean()
+df_ind["WMA"] = df_ind["price"].rolling(20).apply(
+    lambda x: np.dot(x, np.arange(1, len(x)+1)) / np.sum(np.arange(1, len(x)+1))
+)
+
+# =========================
+# RSI
+# =========================
+
+delta = df_ind["price"].diff()
+gain = delta.clip(lower=0)
+loss = -delta.clip(upper=0)
+
+avg_gain = gain.rolling(14).mean()
+avg_loss = loss.rolling(14).mean()
+
+rs = avg_gain / avg_loss
+df_ind["RSI"] = 100 - (100 / (1 + rs))
+
+# =========================
+# MACD
+# =========================
+
+ema12 = df_ind["price"].ewm(span=12).mean()
+ema26 = df_ind["price"].ewm(span=26).mean()
+
+df_ind["MACD"] = ema12 - ema26
+df_ind["MACD_signal"] = df_ind["MACD"].ewm(span=9).mean()
+
+# =========================
+# Bollinger Bands
+# =========================
+
+df_ind["BB_MID"] = df_ind["price"].rolling(20).mean()
+df_ind["BB_STD"] = df_ind["price"].rolling(20).std()
+
+df_ind["BB_UPPER"] = df_ind["BB_MID"] + 2 * df_ind["BB_STD"]
+df_ind["BB_LOWER"] = df_ind["BB_MID"] - 2 * df_ind["BB_STD"]
+
+# =========================
+# Z-Score
+# =========================
+
+df_ind["Z"] = (df_ind["price"] - df_ind["BB_MID"]) / df_ind["BB_STD"]
+
+# =========================
+# ROC
+# =========================
+
+df_ind["ROC"] = df_ind["price"].pct_change(periods=10) * 100
+
+# =========================
+# Momentum
+# =========================
+
+df_ind["Momentum"] = df_ind["price"] - df_ind["price"].shift(10)
+
+# =========================
+# Rolling Stats
+# =========================
+
+df_ind["Rolling_Mean"] = df_ind["price"].rolling(20).mean()
+df_ind["Rolling_Std"] = df_ind["price"].rolling(20).std()
+
+# =========================
+# Volatility
+# =========================
+
+df_ind["Volatility"] = df_ind["returns"].rolling(20).std() * np.sqrt(365)
+
+st.subheader("🕯️ Candlestick + Indicators")
+
+fig = go.Figure()
+
+# Candle
+fig.add_trace(go.Candlestick(
+    x=ohlc["date"],
+    open=ohlc["Open"],
+    high=ohlc["High"],
+    low=ohlc["Low"],
+    close=ohlc["Close"],
+    name="Price"
+))
+
+# Indicators Overlay
+if "SMA" in selected_indicators:
+    fig.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["SMA"],
+        name="SMA",
+        line=dict(width=2)
+    ))
+
+if "EMA" in selected_indicators:
+    fig.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["EMA"],
+        name="EMA",
+        line=dict(width=2)
+    ))
+
+if "Bollinger Bands" in selected_indicators:
+    fig.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["BB_UPPER"],
+        name="BB Upper",
+        line=dict(dash="dot")
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["BB_LOWER"],
+        name="BB Lower",
+        line=dict(dash="dot")
+    ))
+
+fig.update_layout(
+    height=750,
+    xaxis_rangeslider_visible=False,
+    hovermode="x unified"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+if "RSI" in selected_indicators:
+
+    st.subheader("📉 RSI")
+
+    fig_rsi = px.line(df_ind, x="datetime", y="RSI")
+    fig_rsi.add_hline(y=70, line_dash="dash")
+    fig_rsi.add_hline(y=30, line_dash="dash")
+
+    st.plotly_chart(fig_rsi, use_container_width=True)
+
+
+if "MACD" in selected_indicators:
+
+    st.subheader("📊 MACD")
+
+    fig_macd = go.Figure()
+
+    fig_macd.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["MACD"],
+        name="MACD"
+    ))
+
+    fig_macd.add_trace(go.Scatter(
+        x=df_ind["datetime"],
+        y=df_ind["MACD_signal"],
+        name="Signal"
+    ))
+
+    st.plotly_chart(fig_macd, use_container_width=True)
+
+
+if "Z-Score" in selected_indicators:
+
+    st.subheader("📐 Z-Score")
+
+    st.plotly_chart(
+        px.line(df_ind, x="datetime", y="Z"),
+        use_container_width=True
+    )
