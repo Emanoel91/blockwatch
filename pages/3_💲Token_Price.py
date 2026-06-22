@@ -330,6 +330,7 @@ if st.button(
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime, timezone
 
 st.divider()
@@ -526,7 +527,7 @@ if st.button(
         )
 
         # ---------------------------------------------
-        # Calculate Statistics
+        # Statistics
         # ---------------------------------------------
 
         first_price = df_chart["price"].iloc[0]
@@ -545,7 +546,7 @@ if st.button(
         avg_price = df_chart["price"].mean()
 
         # ---------------------------------------------
-        # Price Chart
+        # Line Chart
         # ---------------------------------------------
 
         fig = px.line(
@@ -619,7 +620,71 @@ if st.button(
                 f"${avg_price:,.6f}"
             )
 
+        # ---------------------------------------------
+        # Daily Candlestick Chart
+        # ---------------------------------------------
+
+        st.subheader("🕯️ Daily Candlestick Chart")
+
+        if period == "1D":
+
+            st.info(
+                "For meaningful candlesticks, use 1H, 4H or 12H intervals."
+            )
+
+        if len(df_chart) > 5000:
+
+            st.warning(
+                "Too many data points for candlestick chart. Consider increasing interval."
+            )
+
+        df_daily = df_chart.copy()
+
+        df_daily["date"] = (
+            df_daily["datetime"]
+            .dt
+            .floor("D")
+        )
+
+        ohlc = (
+            df_daily
+            .groupby("date")["price"]
+            .agg(
+                Open="first",
+                High="max",
+                Low="min",
+                Close="last"
+            )
+            .reset_index()
+        )
+
+        if len(ohlc) > 0:
+
+            candle_fig = go.Figure(
+                data=[
+                    go.Candlestick(
+                        x=ohlc["date"],
+                        open=ohlc["Open"],
+                        high=ohlc["High"],
+                        low=ohlc["Low"],
+                        close=ohlc["Close"]
+                    )
+                ]
+            )
+
+            candle_fig.update_layout(
+                title=f"{symbol} Daily OHLC",
+                height=700,
+                xaxis_title="Date",
+                yaxis_title="Price (USD)",
+                xaxis_rangeslider_visible=False
+            )
+
+            st.plotly_chart(
+                candle_fig,
+                use_container_width=True
+            )
+
     except Exception as e:
 
         st.error(f"Error: {e}")
-
