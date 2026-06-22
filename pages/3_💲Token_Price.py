@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 st.title("💲Token Price")
-
+st.header("🔖 Current Token Price")
 # =====================================================
 # CUSTOM CSS
 # =====================================================
@@ -190,8 +190,7 @@ if st.button("Get Token Price", use_container_width=True):
         st.error(f"Error: {e}")
 
 # ===================================================================== Part II ================================================================
-st.divider()
-st.header("📅 Historical Token Price")
+
 # =====================================================
 # SECTION 2 : HISTORICAL TOKEN PRICE
 # =====================================================
