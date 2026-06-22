@@ -181,9 +181,9 @@ if st.button("Get Token Price", use_container_width=True):
         # RAW DATA
         # =================================================
 
-        with st.expander("View Raw API Response"):
+#        with st.expander("View Raw API Response"):
 
-            st.json(token)
+#            st.json(token)
 
     except Exception as e:
 
