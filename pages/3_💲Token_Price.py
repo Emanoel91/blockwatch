@@ -10,53 +10,67 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("💲Token Price")
+st.title("🪙 Token Price")
 
 # =====================================================
-# CUSTOM KPI CSS
+# CUSTOM CSS
 # =====================================================
 
 st.markdown("""
 <style>
 
-.token-kpi {
+/* Main KPI */
+
+[data-testid="metric-container"] {
     background: linear-gradient(
         135deg,
-        rgba(34,197,94,0.20),
-        rgba(22,163,74,0.08)
+        rgba(220,252,231,0.95),
+        rgba(187,247,208,0.85)
     );
-    border: 1px solid rgba(34,197,94,0.35);
+    border: 1px solid #86efac;
+    padding: 25px;
     border-radius: 20px;
-    padding: 30px;
-    text-align: center;
-    box-shadow: 0px 6px 20px rgba(34,197,94,0.15);
+    box-shadow: 0px 4px 15px rgba(34,197,94,0.15);
 }
 
-.token-kpi-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #22c55e;
-    margin-bottom: 15px;
+/* KPI Label */
+
+div[data-testid="stMetricLabel"] {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #166534 !important;
 }
 
-.token-kpi-price {
-    font-size: 42px;
-    font-weight: 800;
-    color: white;
+/* KPI Value */
+
+div[data-testid="stMetricValue"] {
+    font-size: 42px !important;
+    font-weight: 800 !important;
+    color: #14532d !important;
 }
 
-.token-kpi-symbol {
-    font-size: 22px;
-    font-weight: 700;
-    color: #a7f3d0;
-    margin-top: 10px;
+/* Smaller metrics */
+
+.small-metric [data-testid="metric-container"] {
+    background: #111111;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.small-metric div[data-testid="stMetricLabel"] {
+    color: white !important;
+    font-size: 14px !important;
+}
+
+.small-metric div[data-testid="stMetricValue"] {
+    color: white !important;
+    font-size: 24px !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# API FUNCTION
+# API
 # =====================================================
 
 @st.cache_data(ttl=300)
@@ -72,10 +86,7 @@ def get_token_price(chain, address):
 
     data = response.json()
 
-    coin_data = data["coins"].get(coin)
-
-    return coin_data
-
+    return data["coins"].get(coin)
 
 # =====================================================
 # INPUTS
@@ -92,17 +103,17 @@ with col1:
 with col2:
     address = st.text_input(
         "Token Address",
-        placeholder="0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        placeholder="0x514910771AF9Ca656af840dff83E8264EcF986CA"
     )
 
 # =====================================================
-# SEARCH
+# BUTTON
 # =====================================================
 
 if st.button("Get Token Price", use_container_width=True):
 
     if not chain or not address:
-        st.warning("Please enter chain and token address.")
+        st.warning("Please enter blockchain and token address.")
         st.stop()
 
     try:
@@ -113,61 +124,67 @@ if st.button("Get Token Price", use_container_width=True):
             st.error("Token not found.")
             st.stop()
 
-        price = token.get("price", 0)
         symbol = token.get("symbol", "Unknown")
+        price = float(token.get("price", 0))
         decimals = token.get("decimals", "-")
-        confidence = token.get("confidence", "-")
+        confidence = token.get("confidence", 0)
 
-        # =============================================
-        # BEAUTIFUL KPI
-        # =============================================
+        # =================================================
+        # MAIN KPI
+        # =================================================
 
-        st.markdown(
-            f"""
-            <div class="token-kpi">
-                <div class="token-kpi-title">
-                    Current Price ({symbol})
-                </div>
-
-                <div class="token-kpi-price">
-                    ${price:,.6f}
-                </div>
-
-                <div class="token-kpi-symbol">
-                    {symbol}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            label=f"Current Price ({symbol})",
+            value=f"${price:,.6f}"
         )
 
         st.write("")
 
-        # =============================================
-        # EXTRA INFO
-        # =============================================
+        # =================================================
+        # DETAILS
+        # =================================================
 
-        c1, c2, c3 = st.columns(3)
+        col1, col2, col3 = st.columns(3)
 
-        with c1:
+        with col1:
+            st.markdown('<div class="small-metric">', unsafe_allow_html=True)
             st.metric(
                 "Symbol",
                 symbol
             )
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with c2:
+        with col2:
+            st.markdown('<div class="small-metric">', unsafe_allow_html=True)
             st.metric(
                 "Decimals",
                 decimals
             )
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with c3:
+        with col3:
+            st.markdown('<div class="small-metric">', unsafe_allow_html=True)
+
+            if confidence:
+                conf_text = f"{confidence:.2%}"
+            else:
+                conf_text = "N/A"
+
             st.metric(
                 "Confidence",
-                f"{confidence:.2%}"
-                if isinstance(confidence, float)
-                else confidence
+                conf_text
             )
 
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # =================================================
+        # RAW DATA
+        # =================================================
+
+        with st.expander("View Raw API Response"):
+
+            st.json(token)
+
     except Exception as e:
+
         st.error(f"Error: {e}")
