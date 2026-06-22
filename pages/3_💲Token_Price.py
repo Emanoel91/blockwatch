@@ -344,7 +344,7 @@ def get_price_chart(
     chain,
     address,
     start_ts,
-    end_ts,
+    span,
     period
 ):
 
@@ -354,8 +354,8 @@ def get_price_chart(
 
     params = {
         "start": start_ts,
-        "end": end_ts,
-        "period": period
+        "period": period,
+        "span": span
     }
 
     response = requests.get(
@@ -369,188 +369,3 @@ def get_price_chart(
     data = response.json()
 
     return data["coins"].get(coin)
-
-
-# -----------------------------------------------------
-# INPUTS
-# -----------------------------------------------------
-
-c1, c2 = st.columns(2)
-
-with c1:
-    chart_chain = st.text_input(
-        "Blockchain",
-        placeholder="ethereum",
-        key="chart_chain"
-    )
-
-with c2:
-    chart_address = st.text_input(
-        "Token Address",
-        placeholder="0x514910771AF9Ca656af840dff83E8264EcF986CA",
-        key="chart_address"
-    )
-
-d1, d2, d3 = st.columns(3)
-
-with d1:
-    start_date = st.date_input(
-        "Start Date",
-        key="chart_start"
-    )
-
-with d2:
-    end_date = st.date_input(
-        "End Date",
-        key="chart_end"
-    )
-
-with d3:
-    period = st.selectbox(
-        "Interval",
-        [
-            "1h",
-            "4h",
-            "12h",
-            "1d",
-            "7d"
-        ],
-        index=3,
-        key="chart_period"
-    )
-
-# -----------------------------------------------------
-# BUTTON
-# -----------------------------------------------------
-
-if st.button(
-    "Generate Price Chart",
-    use_container_width=True,
-    key="chart_button"
-):
-
-    try:
-
-        start_ts = int(
-            datetime.combine(
-                start_date,
-                datetime.min.time()
-            ).replace(
-                tzinfo=timezone.utc
-            ).timestamp()
-        )
-
-        end_ts = int(
-            datetime.combine(
-                end_date,
-                datetime.min.time()
-            ).replace(
-                tzinfo=timezone.utc
-            ).timestamp()
-        )
-
-        token = get_price_chart(
-            chart_chain,
-            chart_address,
-            start_ts,
-            end_ts,
-            period
-        )
-
-        if token is None:
-
-            st.error("No chart data found.")
-            st.stop()
-
-        symbol = token["symbol"]
-
-        prices = token["prices"]
-
-        if len(prices) == 0:
-
-            st.warning("No price data available.")
-            st.stop()
-
-        # -------------------------------------------------
-        # DATAFRAME
-        # -------------------------------------------------
-
-        df_chart = pd.DataFrame(prices)
-
-        df_chart["datetime"] = pd.to_datetime(
-            df_chart["timestamp"],
-            unit="s"
-        )
-
-        # -------------------------------------------------
-        # KPI
-        # -------------------------------------------------
-
-        latest_price = df_chart["price"].iloc[-1]
-
-        st.metric(
-            f"Latest {symbol} Price",
-            f"${latest_price:,.6f}"
-        )
-
-        # -------------------------------------------------
-        # CHART
-        # -------------------------------------------------
-
-        fig = px.line(
-            df_chart,
-            x="datetime",
-            y="price",
-            title=f"{symbol} Price History"
-        )
-
-        fig.update_traces(
-            line_width=3
-        )
-
-        fig.update_layout(
-            height=600,
-            xaxis_title="Date",
-            yaxis_title="Price (USD)",
-            hovermode="x unified"
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-        # -------------------------------------------------
-        # SUMMARY KPI
-        # -------------------------------------------------
-
-        col1, col2, col3 = st.columns(3)
-
-        first_price = df_chart["price"].iloc[0]
-
-        change_pct = (
-            (latest_price - first_price)
-            / first_price
-        ) * 100
-
-        with col1:
-            st.metric(
-                "Start Price",
-                f"${first_price:,.6f}"
-            )
-
-        with col2:
-            st.metric(
-                "End Price",
-                f"${latest_price:,.6f}"
-            )
-
-        with col3:
-            st.metric(
-                "Change %",
-                f"{change_pct:.2f}%"
-            )
-
-    except Exception as e:
-
-        st.error(f"Error: {e}")
