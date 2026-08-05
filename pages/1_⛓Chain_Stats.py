@@ -743,7 +743,7 @@ try:
         x=chart_df["date"],
         y=chart_df["transactions_count"],
         name="Daily Transactions",
-        marker_color="#d7ff00"   
+        marker_color="#264e72"   
     ),
     secondary_y=False
 )
