@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import plotly.graph_objects as go
+from datetime import datetime, timezone
 
 # =====================================================
 # PAGE CONFIG
@@ -10,16 +11,6 @@ st.set_page_config(
     page_title="Global",
     layout="wide"
 )
-
-# =====================================================
-# API KEY
-# =====================================================
-
-# بهتر است کلید API را داخل .streamlit/secrets.toml قرار دهید:
-# CRYPTORANK_API_KEY = "e8d6bf058e3f0210b43ad8c89131bbd32e83aae1c86ff1e5009adbbda66a"
-API_KEY = st.secrets["CRYPTORANK_API_KEY"]
-
-BASE_URL = "https://api.cryptorank.io/v3"
 
 # =====================================================
 # CSS
@@ -60,43 +51,56 @@ div[data-testid="stMetricLabel"] {
 
 KPI_HELP = {
     "BTC Dominance": "سهم بیت‌کوین از کل مارکت‌کپ کریپتو (٪).",
-    "BTC Dominance Change 24H": "تغییر سهم بیت‌کوین طی ۲۴ ساعت گذشته (٪).",
     "ETH Dominance": "سهم اتریوم از کل مارکت‌کپ کریپتو (٪).",
-    "ETH Dominance Change 24H": "تغییر سهم اتریوم طی ۲۴ ساعت گذشته (٪).",
     "Others Dominance": "سهم سایر ارزها (به‌جز BTC و ETH) از کل مارکت‌کپ (٪).",
+    "Total Market Cap": "کل ارزش بازار جهانی کریپتو (دلار).",
+    "Total Volume 24H": "کل حجم معاملات ۲۴ ساعت گذشته بازار (دلار).",
+    "Market Cap Change 24H": "تغییر کل ارزش بازار طی ۲۴ ساعت گذشته (٪).",
+    "Active Cryptocurrencies": "تعداد ارزهای دیجیتال فعال شناسایی‌شده.",
+    "Markets": "تعداد صرافی‌ها/بازارهای شناسایی‌شده.",
 }
 
 # =====================================================
-# FETCH DATA
+# FORMATTER
 # =====================================================
 
-@st.cache_data(ttl=7200)
-def fetch_dominance():
+def format_number(value):
 
-    url = f"{BASE_URL}/global/dominance"
+    if value is None:
+        return "-"
 
-    headers = {
-        "X-Api-Key": API_KEY
-    }
+    try:
 
-    response = requests.get(
-        url,
-        headers=headers,
-        timeout=30
-    )
+        value = float(value)
+
+        if value >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.2f}B"
+
+        if value >= 1_000_000:
+            return f"{value / 1_000_000:.2f}M"
+
+        if value >= 1_000:
+            return f"{value / 1_000:.2f}K"
+
+        return f"{value:,.2f}"
+
+    except Exception:
+        return str(value)
+
+# =====================================================
+# FETCH DATA (CoinGecko - free, no API key required)
+# =====================================================
+
+@st.cache_data(ttl=1800)
+def fetch_global_data():
+
+    url = "https://api.coingecko.com/api/v3/global"
+
+    response = requests.get(url, timeout=30)
 
     if not response.ok:
-        try:
-            err = response.json().get("error", {})
-            code = err.get("code", "UNKNOWN")
-            message = err.get("message", response.text)
-        except Exception:
-            code = "UNKNOWN"
-            message = response.text
-
         raise RuntimeError(
-            f"CryptoRank API error {response.status_code} "
-            f"({code}): {message}"
+            f"CoinGecko API error {response.status_code}: {response.text}"
         )
 
     return response.json()["data"]
@@ -112,13 +116,20 @@ def show_metrics(metrics, cols=4):
         row = st.columns(cols)
         chunk = metrics[i:i + cols]
 
-        for col, (label, value) in zip(row, chunk):
+        for col, (label, value, is_pct) in zip(row, chunk):
 
             with col:
 
+                if value is None:
+                    display_value = "-"
+                elif is_pct:
+                    display_value = f"{value:.2f}%"
+                else:
+                    display_value = format_number(value)
+
                 st.metric(
                     label=label,
-                    value=f"{value:.2f}%" if value is not None else "-",
+                    value=display_value,
                     help=KPI_HELP.get(label)
                 )
 
@@ -129,7 +140,7 @@ def show_metrics(metrics, cols=4):
 st.title("🌐 Global Market Dominance")
 
 st.info(
-    "📊 سهم بازار بیت‌کوین، اتریوم و سایر ارزها از کل مارکت‌کپ کریپتو (منبع: CryptoRank)."
+    "📊 سهم بازار بیت‌کوین، اتریوم و سایر ارزها از کل مارکت‌کپ کریپتو (منبع: CoinGecko)."
 )
 
 # =====================================================
@@ -138,28 +149,50 @@ st.info(
 
 try:
 
-    data = fetch_dominance()
+    data = fetch_global_data()
 
-    btc_dom = data.get("btcDominance")
-    btc_change = data.get("btcDominanceChangePercent24h")
-    eth_dom = data.get("ethDominance")
-    eth_change = data.get("ethDominanceChangePercent24h")
-    others_dom = data.get("othersDominance")
+    market_cap_pct = data.get("market_cap_percentage", {})
+
+    btc_dom = market_cap_pct.get("btc")
+    eth_dom = market_cap_pct.get("eth")
+    others_dom = None
+
+    if btc_dom is not None and eth_dom is not None:
+        others_dom = max(0.0, 100 - btc_dom - eth_dom)
+
+    total_market_cap = data.get("total_market_cap", {}).get("usd")
+    total_volume = data.get("total_volume", {}).get("usd")
+    market_cap_change_24h = data.get("market_cap_change_percentage_24h_usd")
+    active_cryptos = data.get("active_cryptocurrencies")
+    markets = data.get("markets")
+    updated_at = data.get("updated_at")
 
     # -------------------------------------------------
-    # METRICS
+    # DOMINANCE METRICS
     # -------------------------------------------------
+
+    st.subheader("🪙 Dominance")
 
     show_metrics([
-        ("BTC Dominance", btc_dom),
-        ("BTC Dominance Change 24H", btc_change),
-        ("ETH Dominance", eth_dom),
-        ("ETH Dominance Change 24H", eth_change),
+        ("BTC Dominance", btc_dom, True),
+        ("ETH Dominance", eth_dom, True),
+        ("Others Dominance", others_dom, True),
+    ], cols=3)
+
+    st.divider()
+
+    # -------------------------------------------------
+    # MARKET OVERVIEW METRICS
+    # -------------------------------------------------
+
+    st.subheader("💰 Market Overview")
+
+    show_metrics([
+        ("Total Market Cap", total_market_cap, False),
+        ("Total Volume 24H", total_volume, False),
+        ("Market Cap Change 24H", market_cap_change_24h, True),
+        ("Active Cryptocurrencies", active_cryptos, False),
     ])
-
-    show_metrics([
-        ("Others Dominance", others_dom),
-    ], cols=4)
 
     st.divider()
 
@@ -193,31 +226,45 @@ try:
     st.plotly_chart(fig_pie, width="stretch")
 
     # -------------------------------------------------
-    # 24H CHANGE BAR CHART
+    # TOP COINS DOMINANCE BAR CHART
     # -------------------------------------------------
 
-    st.subheader("📉 24H Dominance Change")
+    st.subheader("📊 Top Coins Market Cap Share")
+
+    top_items = sorted(
+        market_cap_pct.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )[:10]
 
     fig_bar = go.Figure()
 
     fig_bar.add_trace(
         go.Bar(
-            x=["BTC", "ETH"],
-            y=[btc_change, eth_change],
-            marker_color=[
-                "green" if btc_change and btc_change >= 0 else "red",
-                "green" if eth_change and eth_change >= 0 else "red"
-            ]
+            x=[coin.upper() for coin, _ in top_items],
+            y=[pct for _, pct in top_items],
+            marker_color="#264e72"
         )
     )
 
     fig_bar.update_layout(
         height=450,
-        title="Dominance Change % (24H)",
-        yaxis_title="Change %"
+        title="Top 10 Coins by Market Cap Share (%)",
+        yaxis_title="Dominance %"
     )
 
     st.plotly_chart(fig_bar, width="stretch")
+
+    # -------------------------------------------------
+    # LAST UPDATE
+    # -------------------------------------------------
+
+    if updated_at:
+        updated_str = datetime.fromtimestamp(
+            updated_at, tz=timezone.utc
+        ).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        st.caption(f"Last update: {updated_str}")
 
     # -------------------------------------------------
     # RAW DATA
