@@ -90,6 +90,54 @@ def format_number(value):
         return str(value)
 
 # =====================================================
+# COINGECKO REQUEST HELPER (with retry/backoff on 429)
+# =====================================================
+
+# اختیاری: اگه یک کلید رایگان Demo API از CoinGecko داری، آن را در
+# secrets.toml با نام COINGECKO_API_KEY اضافه کن تا محدودیت نرخ
+# درخواست بالاتر بره. اگه نداری، کد بدون کلید هم کار می‌کنه.
+COINGECKO_API_KEY = st.secrets.get("COINGECKO_API_KEY", None)
+
+
+def _coingecko_get(url, params=None, max_retries=4):
+
+    headers = {}
+
+    if COINGECKO_API_KEY:
+        headers["x-cg-demo-api-key"] = COINGECKO_API_KEY
+
+    delay = 5
+
+    for attempt in range(max_retries):
+
+        response = requests.get(url, params=params, headers=headers, timeout=30)
+
+        if response.status_code == 429:
+
+            retry_after = response.headers.get("Retry-After")
+
+            wait_time = float(retry_after) if retry_after else delay
+
+            if attempt < max_retries - 1:
+                time.sleep(wait_time)
+                delay *= 2
+                continue
+
+            raise RuntimeError(
+                f"CoinGecko API error 429: Rate limit exceeded after "
+                f"{max_retries} retries. {response.text}"
+            )
+
+        if not response.ok:
+            raise RuntimeError(
+                f"CoinGecko API error {response.status_code}: {response.text}"
+            )
+
+        return response
+
+    raise RuntimeError("CoinGecko API request failed after retries.")
+
+# =====================================================
 # FETCH DATA (CoinGecko - free, no API key required)
 # =====================================================
 
@@ -98,12 +146,7 @@ def fetch_global_data():
 
     url = "https://api.coingecko.com/api/v3/global"
 
-    response = requests.get(url, timeout=30)
-
-    if not response.ok:
-        raise RuntimeError(
-            f"CoinGecko API error {response.status_code}: {response.text}"
-        )
+    response = _coingecko_get(url)
 
     return response.json()["data"]
 
@@ -115,7 +158,7 @@ def fetch_global_data():
 # می‌زنیم و به‌عنوان «کل بازار» در نظر می‌گیریم. این یک تخمین
 # است، نه عدد دقیق رسمی.
 
-TOP_N_FOR_HISTORY = 12
+TOP_N_FOR_HISTORY = 6
 
 
 def _fetch_market_chart(coin_id, days):
@@ -127,13 +170,7 @@ def _fetch_market_chart(coin_id, days):
         "days": days
     }
 
-    response = requests.get(url, params=params, timeout=30)
-
-    if not response.ok:
-        raise RuntimeError(
-            f"CoinGecko API error {response.status_code} "
-            f"for {coin_id}: {response.text}"
-        )
+    response = _coingecko_get(url, params=params)
 
     return response.json()
 
@@ -151,7 +188,7 @@ def _market_caps_to_daily_series(raw_json, label):
     return df.set_index("date")
 
 
-@st.cache_data(ttl=21600)
+@st.cache_data(ttl=43200)
 def fetch_dominance_history(days, top_n=TOP_N_FOR_HISTORY):
 
     markets_url = "https://api.coingecko.com/api/v3/coins/markets"
@@ -164,12 +201,7 @@ def fetch_dominance_history(days, top_n=TOP_N_FOR_HISTORY):
         "sparkline": "false"
     }
 
-    response = requests.get(markets_url, params=params, timeout=30)
-
-    if not response.ok:
-        raise RuntimeError(
-            f"CoinGecko API error {response.status_code}: {response.text}"
-        )
+    response = _coingecko_get(markets_url, params=params)
 
     top_coins = response.json()
 
@@ -186,8 +218,8 @@ def fetch_dominance_history(days, top_n=TOP_N_FOR_HISTORY):
         if not series.empty:
             series_list.append(series)
 
-        # فاصله کوچک بین درخواست‌ها برای جلوگیری از rate limit
-        time.sleep(1.3)
+        # فاصله بین درخواست‌ها برای جلوگیری از rate limit
+        time.sleep(2.5)
 
     if not series_list:
         raise RuntimeError("No historical market cap data returned.")
@@ -376,60 +408,78 @@ try:
         index=1
     )
 
+    load_history = st.button("📥 Load / Refresh Dominance History")
+
+    if "hist_df" not in st.session_state:
+        st.session_state["hist_df"] = None
+        st.session_state["hist_days"] = None
+
     try:
 
-        hist_df = fetch_dominance_history(int(days_option))
+        if load_history:
 
-        fig_dom_history = go.Figure()
+            with st.spinner("در حال دریافت تاریخچه دامیننس... (ممکنه چند ثانیه طول بکشه)"):
+                st.session_state["hist_df"] = fetch_dominance_history(int(days_option))
+                st.session_state["hist_days"] = days_option
 
-        fig_dom_history.add_trace(
-            go.Scatter(
-                x=hist_df["date"],
-                y=hist_df["btc_dominance"],
-                mode="lines",
-                name="BTC",
-                stackgroup="one",
-                line=dict(color="#f7931a")
+        hist_df = st.session_state["hist_df"]
+
+        if hist_df is None:
+
+            st.info("برای نمایش نمودار، روی دکمه «Load / Refresh Dominance History» کلیک کن.")
+
+        else:
+
+            fig_dom_history = go.Figure()
+
+            fig_dom_history.add_trace(
+                go.Scatter(
+                    x=hist_df["date"],
+                    y=hist_df["btc_dominance"],
+                    mode="lines",
+                    name="BTC",
+                    stackgroup="one",
+                    line=dict(color="#f7931a")
+                )
             )
-        )
 
-        fig_dom_history.add_trace(
-            go.Scatter(
-                x=hist_df["date"],
-                y=hist_df["eth_dominance"],
-                mode="lines",
-                name="ETH",
-                stackgroup="one",
-                line=dict(color="#627eea")
+            fig_dom_history.add_trace(
+                go.Scatter(
+                    x=hist_df["date"],
+                    y=hist_df["eth_dominance"],
+                    mode="lines",
+                    name="ETH",
+                    stackgroup="one",
+                    line=dict(color="#627eea")
+                )
             )
-        )
 
-        fig_dom_history.add_trace(
-            go.Scatter(
-                x=hist_df["date"],
-                y=hist_df["others_dominance"],
-                mode="lines",
-                name="Others",
-                stackgroup="one",
-                line=dict(color="#4a4a4a")
+            fig_dom_history.add_trace(
+                go.Scatter(
+                    x=hist_df["date"],
+                    y=hist_df["others_dominance"],
+                    mode="lines",
+                    name="Others",
+                    stackgroup="one",
+                    line=dict(color="#4a4a4a")
+                )
             )
-        )
 
-        fig_dom_history.update_layout(
-            height=550,
-            title=f"Dominance Over Last {days_option} Days (Approximate)",
-            yaxis_title="Dominance %",
-            yaxis_range=[0, 100],
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=0.5
+            fig_dom_history.update_layout(
+                height=550,
+                title=f"Dominance Over Last {st.session_state['hist_days']} Days (Approximate)",
+                yaxis_title="Dominance %",
+                yaxis_range=[0, 100],
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=0.5
+                )
             )
-        )
 
-        st.plotly_chart(fig_dom_history, width="stretch")
+            st.plotly_chart(fig_dom_history, width="stretch")
 
     except Exception as hist_error:
 
