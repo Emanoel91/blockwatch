@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import pandas as pd
+import time
 import plotly.graph_objects as go
 from datetime import datetime, timezone
 
@@ -104,6 +106,105 @@ def fetch_global_data():
         )
 
     return response.json()["data"]
+
+# =====================================================
+# FETCH DOMINANCE HISTORY (approximate, top-N coins)
+# =====================================================
+# توضیح: CoinGecko در پلن رایگان، تاریخچه دامیننس کل بازار را
+# نمی‌دهد. برای تخمین آن، مارکت‌کپ تاریخی چند ارز برتر را جمع
+# می‌زنیم و به‌عنوان «کل بازار» در نظر می‌گیریم. این یک تخمین
+# است، نه عدد دقیق رسمی.
+
+TOP_N_FOR_HISTORY = 12
+
+
+def _fetch_market_chart(coin_id, days):
+
+    url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+
+    params = {
+        "vs_currency": "usd",
+        "days": days
+    }
+
+    response = requests.get(url, params=params, timeout=30)
+
+    if not response.ok:
+        raise RuntimeError(
+            f"CoinGecko API error {response.status_code} "
+            f"for {coin_id}: {response.text}"
+        )
+
+    return response.json()
+
+
+def _market_caps_to_daily_series(raw_json, label):
+
+    df = pd.DataFrame(raw_json.get("market_caps", []), columns=["timestamp", label])
+
+    if df.empty:
+        return df
+
+    df["date"] = pd.to_datetime(df["timestamp"], unit="ms").dt.date
+    df = df.groupby("date")[label].last().reset_index()
+
+    return df.set_index("date")
+
+
+@st.cache_data(ttl=21600)
+def fetch_dominance_history(days, top_n=TOP_N_FOR_HISTORY):
+
+    markets_url = "https://api.coingecko.com/api/v3/coins/markets"
+
+    params = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": top_n,
+        "page": 1,
+        "sparkline": "false"
+    }
+
+    response = requests.get(markets_url, params=params, timeout=30)
+
+    if not response.ok:
+        raise RuntimeError(
+            f"CoinGecko API error {response.status_code}: {response.text}"
+        )
+
+    top_coins = response.json()
+
+    series_list = []
+
+    for coin in top_coins:
+
+        coin_id = coin["id"]
+
+        raw = _fetch_market_chart(coin_id, days)
+
+        series = _market_caps_to_daily_series(raw, coin_id)
+
+        if not series.empty:
+            series_list.append(series)
+
+        # فاصله کوچک بین درخواست‌ها برای جلوگیری از rate limit
+        time.sleep(1.3)
+
+    if not series_list:
+        raise RuntimeError("No historical market cap data returned.")
+
+    merged = pd.concat(series_list, axis=1).sort_index()
+    merged = merged.ffill().dropna(how="all")
+
+    coin_columns = [c for c in merged.columns]
+    merged["total"] = merged[coin_columns].sum(axis=1)
+
+    merged["btc_dominance"] = merged.get("bitcoin", 0) / merged["total"] * 100
+    merged["eth_dominance"] = merged.get("ethereum", 0) / merged["total"] * 100
+    merged["others_dominance"] = (
+        100 - merged["btc_dominance"] - merged["eth_dominance"]
+    )
+
+    return merged.reset_index()
 
 # =====================================================
 # KPI RENDER
@@ -255,9 +356,86 @@ try:
 
     st.plotly_chart(fig_bar, width="stretch")
 
+    st.divider()
+
     # -------------------------------------------------
-    # LAST UPDATE
+    # DOMINANCE OVER TIME (approximate)
     # -------------------------------------------------
+
+    st.subheader("📈 Dominance Over Time (BTC vs ETH vs Others)")
+
+    st.caption(
+        "⚠️ این نمودار بر اساس مجموع مارکت‌کپ تاریخی "
+        f"{TOP_N_FOR_HISTORY} ارز برتر تخمین زده شده "
+        "(چون CoinGecko در پلن رایگان تاریخچه دامیننس کل بازار را نمی‌دهد)."
+    )
+
+    days_option = st.selectbox(
+        "Time Range",
+        ["7", "30", "90", "180", "365"],
+        index=1
+    )
+
+    try:
+
+        hist_df = fetch_dominance_history(int(days_option))
+
+        fig_dom_history = go.Figure()
+
+        fig_dom_history.add_trace(
+            go.Scatter(
+                x=hist_df["date"],
+                y=hist_df["btc_dominance"],
+                mode="lines",
+                name="BTC",
+                stackgroup="one",
+                line=dict(color="#f7931a")
+            )
+        )
+
+        fig_dom_history.add_trace(
+            go.Scatter(
+                x=hist_df["date"],
+                y=hist_df["eth_dominance"],
+                mode="lines",
+                name="ETH",
+                stackgroup="one",
+                line=dict(color="#627eea")
+            )
+        )
+
+        fig_dom_history.add_trace(
+            go.Scatter(
+                x=hist_df["date"],
+                y=hist_df["others_dominance"],
+                mode="lines",
+                name="Others",
+                stackgroup="one",
+                line=dict(color="#4a4a4a")
+            )
+        )
+
+        fig_dom_history.update_layout(
+            height=550,
+            title=f"Dominance Over Last {days_option} Days (Approximate)",
+            yaxis_title="Dominance %",
+            yaxis_range=[0, 100],
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5
+            )
+        )
+
+        st.plotly_chart(fig_dom_history, width="stretch")
+
+    except Exception as hist_error:
+
+        st.warning(f"Could not load dominance history: {hist_error}")
+
+    st.divider()
 
     if updated_at:
         updated_str = datetime.fromtimestamp(
