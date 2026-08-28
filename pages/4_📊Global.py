@@ -85,7 +85,19 @@ def fetch_dominance():
         timeout=30
     )
 
-    response.raise_for_status()
+    if not response.ok:
+        try:
+            err = response.json().get("error", {})
+            code = err.get("code", "UNKNOWN")
+            message = err.get("message", response.text)
+        except Exception:
+            code = "UNKNOWN"
+            message = response.text
+
+        raise RuntimeError(
+            f"CryptoRank API error {response.status_code} "
+            f"({code}): {message}"
+        )
 
     return response.json()["data"]
 
@@ -178,7 +190,7 @@ try:
         title="BTC vs ETH vs Others Dominance"
     )
 
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, width="stretch")
 
     # -------------------------------------------------
     # 24H CHANGE BAR CHART
@@ -205,7 +217,7 @@ try:
         yaxis_title="Change %"
     )
 
-    st.plotly_chart(fig_bar, use_container_width=True)
+    st.plotly_chart(fig_bar, width="stretch")
 
     # -------------------------------------------------
     # RAW DATA
