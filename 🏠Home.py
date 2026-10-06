@@ -1,5 +1,5 @@
 import streamlit as st
-
+import market_overview
 # --- Page Config: Tab Title & Icon ---
 st.set_page_config(
     page_title="Blockwatch",
@@ -17,13 +17,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-import streamlit as st
 
-import market_overview
-
-
-with tab_overview:
-    market_overview.render()
 # --- Builder Info ------------------------------------------------------------------------
 
 st.markdown(
