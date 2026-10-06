@@ -17,7 +17,13 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+import streamlit as st
 
+import market_overview
+
+
+with tab_overview:
+    market_overview.render()
 # --- Builder Info ------------------------------------------------------------------------
 
 st.markdown(
